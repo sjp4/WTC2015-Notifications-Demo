@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Techcon</string>
+
+    <string name="hello_world">Notification generator</string>
+    <string name="action_settings">Settings</string>
+    <string name="first_notification">First notification</string>
+    <string name="second_notification">Second notification</string>
+</resources>
