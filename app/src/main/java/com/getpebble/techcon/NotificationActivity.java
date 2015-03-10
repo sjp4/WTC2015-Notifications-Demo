@@ -18,6 +18,7 @@ import android.widget.TextView;
 public class NotificationActivity extends Activity {
     private static final String ACTION_REPLY = "com.getpebble.techcon.REPLY";
     private static final int NOTIFICATION_ID_MAIN = 1;
+    private static final int NOTIFICATION_ID_SIDECHANNEL = 2;
     private static final String TAG = "tag1";
     private static final String EXTRA_MESSAGE_ID = "extra_message_id";
     private static final String KEY_REPLY_TEXT = "reply_text";
@@ -48,6 +49,7 @@ public class NotificationActivity extends Activity {
         BroadcastReceiver receiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                // Receive the result of the Wearable action (this could be in a background service)
                 int messageId = intent.getIntExtra(EXTRA_MESSAGE_ID, -1);
                 Bundle results = RemoteInput.getResultsFromIntent(intent);
                 CharSequence reply = results.getCharSequence(KEY_REPLY_TEXT);
@@ -62,7 +64,7 @@ public class NotificationActivity extends Activity {
     private static final String TICKER_MESSAGE_FROM_HEIKO = "Heiko: When does Wearables TechCon start?";
 
     private void sendFirstNotification() {
-        Notification notification = getNotification(TITLE_MESSAGE_FROM_HEIKO, CONTENT_MESSAGE_FROM_HEIKO, TICKER_MESSAGE_FROM_HEIKO, 111, true);
+        Notification notification = getNotification(TITLE_MESSAGE_FROM_HEIKO, CONTENT_MESSAGE_FROM_HEIKO, TICKER_MESSAGE_FROM_HEIKO, 111, true, null);
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         manager.notify(TAG, NOTIFICATION_ID_MAIN, notification);
     }
@@ -71,27 +73,42 @@ public class NotificationActivity extends Activity {
     private static final String CONTENT_MESSAGE_FROM_STEVE  = "2 new messages from Heiko and Steve";
     private static final String TICKER_MESSAGE_FROM_STEVE = "Steve: It already started!";
 
+    private static final String TITLE_MESSAGE_FROM_STEVE_REAL = "Message from Steve";
+    private static final String CONTENT_MESSAGE_FROM_STEVE_REAL  = "It already started!";
+    private static final String TICKER_MESSAGE_FROM_STEVE_REAL = "Steve: It already started!";
+
     private void sendSecondNotification() {
-        Notification notification = getNotification(TITLE_MESSAGE_FROM_STEVE, CONTENT_MESSAGE_FROM_STEVE, TICKER_MESSAGE_FROM_STEVE, 222, false);
+        Notification notification = getNotification(TITLE_MESSAGE_FROM_STEVE, CONTENT_MESSAGE_FROM_STEVE, TICKER_MESSAGE_FROM_STEVE, 222, false, true);
         NotificationManager manager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         manager.notify(TAG, NOTIFICATION_ID_MAIN, notification);
+
+        // Create a second, sidechannel notification intended just for the Wearable device
+        notification = getNotification(TITLE_MESSAGE_FROM_STEVE_REAL, CONTENT_MESSAGE_FROM_STEVE_REAL, TICKER_MESSAGE_FROM_STEVE_REAL, 333, true, false);
+        manager.notify(TAG, NOTIFICATION_ID_SIDECHANNEL, notification);
     }
 
     String[] REPLIES = { "I'll get back to you", "Yes", "No", "Phrasing" };
 
-    private Notification getNotification(String title, String content, String tickerText, int messageId, boolean addActions) {
+    private Notification getNotification(String title, String content, String tickerText, int messageId, boolean addActions, Boolean isGroupSummary) {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
         builder.setAutoCancel(true);
         builder.setSmallIcon(R.drawable.ic_menu_end_conversation);
         builder.setTicker(tickerText);
         builder.setContentTitle(title);
         builder.setContentText(content);
+        if (isGroupSummary != null) {
+            // Only set these when there is a group summary & sidechannel notification
+            builder.setGroup("groupKey");
+            builder.setGroupSummary(isGroupSummary);
+        }
 
         if (addActions) {
+            // Action for phone
             Intent intentReplyAndroid = new Intent(this, NotificationActivity.class);
             PendingIntent pendingIntentReplyAndroid = PendingIntent.getActivity(this, 0, intentReplyAndroid, PendingIntent.FLAG_UPDATE_CURRENT);
             builder.addAction(R.drawable.ic_menu_revert, "Reply", pendingIntentReplyAndroid);
 
+            // Action for Wearable
             Intent intentReplyWearable = new Intent(ACTION_REPLY);
             intentReplyWearable.putExtra(EXTRA_MESSAGE_ID, messageId);
             PendingIntent pendingIntentReplyWearable = PendingIntent.getBroadcast(this, 0, intentReplyWearable, 0);
