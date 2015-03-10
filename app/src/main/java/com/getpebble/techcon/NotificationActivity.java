@@ -48,6 +48,7 @@ public class NotificationActivity extends Activity {
         BroadcastReceiver receiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                // Receive the result of the Wearable action (this could be in a background service)
                 int messageId = intent.getIntExtra(EXTRA_MESSAGE_ID, -1);
                 Bundle results = RemoteInput.getResultsFromIntent(intent);
                 CharSequence reply = results.getCharSequence(KEY_REPLY_TEXT);
@@ -88,10 +89,12 @@ public class NotificationActivity extends Activity {
         builder.setContentText(content);
 
         if (addActions) {
+            // Action for phone
             Intent intentReplyAndroid = new Intent(this, NotificationActivity.class);
             PendingIntent pendingIntentReplyAndroid = PendingIntent.getActivity(this, 0, intentReplyAndroid, PendingIntent.FLAG_UPDATE_CURRENT);
             builder.addAction(R.drawable.ic_menu_revert, "Reply", pendingIntentReplyAndroid);
 
+            // Action for Wearable
             Intent intentReplyWearable = new Intent(ACTION_REPLY);
             intentReplyWearable.putExtra(EXTRA_MESSAGE_ID, messageId);
             PendingIntent pendingIntentReplyWearable = PendingIntent.getBroadcast(this, 0, intentReplyWearable, 0);
